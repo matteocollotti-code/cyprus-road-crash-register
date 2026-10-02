@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Press-reported road traffic collisions in the Republic of Cyprus, 2016-2026: 8,210 articles on 3,075 crashes.">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<title>Cyprus Road Crash Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700;800&family=Overpass+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: an incident ledger. Masthead with live status, summary tiles, a per-year coverage chart,
+   one filter bar, then the full-width register table and the method notes. */
+:root{
+  --bg:#f1f3f2; --surface:#fbfcfb; --ink:#14191c; --ink-2:#47525a; --muted:#737e86;
+  --line:#dce1e2; --line-2:#c4ccd0;
+  --accent:#9c540b; --accent-ink:#ffffff; --accent-soft:#f5e6d4;
+  --fatal:#d03b3b; --fatal-soft:#f8e0df; --nonfatal:#2a78d6; --nonfatal-soft:#e0ebf9;
+  --ok:#0b7a0b; --wait:#946500; --tip-bg:#14191c; --tip-fg:#fbfcfb;
+  --f-display:"Overpass","Segoe UI",system-ui,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"Overpass Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1214; --surface:#1a1e20; --ink:#edf0f0; --ink-2:#b2bbc0; --muted:#87929a;
+    --line:#2a3135; --line-2:#3b4449;
+    --accent:#e39443; --accent-ink:#1b1206; --accent-soft:#3a2915;
+    --fatal:#d03b3b; --fatal-soft:#3b2122; --nonfatal:#3987e5; --nonfatal-soft:#1b2b40;
+    --ok:#3fbf4a; --wait:#e2aa35; --tip-bg:#edf0f0; --tip-fg:#14191c;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1214; --surface:#1a1e20; --ink:#edf0f0; --ink-2:#b2bbc0; --muted:#87929a;
+  --line:#2a3135; --line-2:#3b4449;
+  --accent:#e39443; --accent-ink:#1b1206; --accent-soft:#3a2915;
+  --fatal:#d03b3b; --fatal-soft:#3b2122; --nonfatal:#3987e5; --nonfatal-soft:#1b2b40;
+  --ok:#3fbf4a; --wait:#e2aa35; --tip-bg:#edf0f0; --tip-fg:#14191c;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.wrap{max-width:1380px;margin:0 auto;padding-inline:clamp(16px,3vw,32px);padding-block:28px 56px;display:grid;gap:22px}
+.wrap > *{min-width:0}
+
+/* Masthead */
+.mast{display:grid;gap:14px}
+.eyebrow{margin:0;font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+h1{margin:0;font-family:var(--f-display);font-weight:800;font-size:clamp(28px,4.2vw,44px);line-height:1.05;letter-spacing:-.01em;text-wrap:balance}
+.lede{margin:0;max-width:72ch;color:var(--ink-2)}
+.status{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;font-size:14px}
+.status b{font-weight:700}
+.status time{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.pulse{width:9px;height:9px;border-radius:50%;background:var(--wait);flex:none}
+.pulse.ok{background:var(--ok)}
+.pulse.live{background:var(--accent);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){.pulse.live{animation:none}}
+
+/* Summary tiles */
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:2px}
+.tile .lab{font-size:13px;color:var(--ink-2)}
+.tile .val{font-family:var(--f-display);font-weight:700;font-size:28px;line-height:1.1}
+.tile .val .key{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:middle}
+@media (max-width:820px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tile:last-child{grid-column:1 / -1}}
+
+/* Panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px clamp(12px,2vw,20px);display:grid;gap:12px}
+.panel-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
+h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:-.005em}
+.hint{margin:0;font-size:13px;color:var(--muted)}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+.sw.f{background:var(--fatal)} .sw.n{background:var(--nonfatal)}
+
+/* Chart */
+.chart-box{position:relative}
+#chart{display:block;width:100%;height:auto;overflow:visible}
+#chart .grid{stroke:var(--line);stroke-width:1}
+#chart .base{stroke:var(--line-2);stroke-width:1}
+#chart .tick{fill:var(--muted);font-family:var(--f-mono);font-size:11px}
+#chart .yr{fill:var(--ink-2);font-family:var(--f-mono);font-size:12px}
+#chart .yr.sel{fill:var(--ink);font-weight:600}
+#chart .cap{fill:var(--ink-2);font-family:var(--f-mono);font-size:11px}
+#chart .st{font-family:var(--f-body);font-size:10.5px;fill:var(--muted)}
+#chart .seg-f{fill:var(--fatal)} #chart .seg-n{fill:var(--nonfatal)}
+#chart .hit{fill:transparent;cursor:pointer}
+#chart .hit:hover,#chart .hit:focus-visible{fill:var(--line);fill-opacity:.45;outline:none}
+#chart .selband{fill:var(--accent-soft)}
+.tip{position:absolute;pointer-events:none;background:var(--tip-bg);color:var(--tip-fg);font-size:13px;padding:8px 10px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-100%);display:grid;gap:2px;z-index:2}
+.tip b{font-family:var(--f-display)}
+
+/* Filters */
+.filters{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:end}
+.field{display:grid;gap:4px;min-width:0}
+.field label,.field .lab{font-size:12px;color:var(--ink-2);letter-spacing:.02em}
+input[type=search],select{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line-2);border-radius:6px;padding:7px 10px;min-height:36px;max-width:100%}
+input[type=search]{width:min(320px,100%)}
+.check{display:inline-flex;align-items:center;gap:8px;font-size:14px;min-height:36px;cursor:pointer}
+.check input{width:16px;height:16px;accent-color:var(--accent)}
+.btn{font:inherit;font-size:14px;font-weight:600;border-radius:6px;padding:7px 12px;min-height:36px;cursor:pointer;border:1px solid var(--line-2);background:var(--surface);color:var(--ink)}
+.btn:hover{border-color:var(--ink-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.spacer{flex:1 1 20px}
+.exports{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+
+/* Table */
+.count{font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
+.table-box{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:1240px;font-size:13.5px}
+thead th{position:sticky;top:0;z-index:1;background:var(--surface);text-align:left;font-family:var(--f-display);font-weight:700;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-2);padding:10px 10px 8px;border-bottom:1px solid var(--line-2);vertical-align:bottom}
+tbody td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:hover td{background:var(--bg)}
+td.num,td.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.w-u{min-width:150px} td.w-o{min-width:220px} td.w-rt{min-width:120px} td.w-l{min-width:130px} td.w-c{min-width:150px}
+td .sub{display:block;font-size:12px;color:var(--muted)}
+tr.is-dup td{color:var(--ink-2)}
+td.dup{text-align:center;font-family:var(--f-mono);font-weight:600;font-size:15px}
+td.link a{font-family:var(--f-mono);font-size:12px;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px;word-break:break-all}
+td.link a:hover{text-decoration-color:var(--accent)}
+.sev{display:inline-flex;align-items:center;gap:6px;padding:2px 8px 2px 6px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.sev::before{content:"";width:8px;height:8px;border-radius:2px}
+.sev.f{background:var(--fatal-soft)} .sev.f::before{background:var(--fatal)}
+.sev.n{background:var(--nonfatal-soft)} .sev.n::before{background:var(--nonfatal)}
+.empty td{padding:36px 16px;text-align:center;color:var(--ink-2)}
+.empty b{display:block;font-family:var(--f-display);font-size:16px;color:var(--ink);margin-bottom:4px}
+.pager{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.copybox{display:grid;gap:6px}
+.copybox textarea{width:100%;height:120px;font-family:var(--f-mono);font-size:12px;background:var(--bg);color:var(--ink);border:1px solid var(--line-2);border-radius:6px;padding:8px}
+
+/* Notes */
+.notes{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:22px}
+@media (max-width:900px){.notes{grid-template-columns:1fr}}
+.notes h3{margin:0 0 6px;font-family:var(--f-display);font-size:15px}
+.notes ul{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--ink-2);max-width:70ch}
+.src{list-style:none;padding:0 !important}
+.src li{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.src .nm{color:var(--ink);font-weight:600}
+.src .meta{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%);background:var(--tip-bg);color:var(--tip-fg);padding:10px 14px;border-radius:8px;font-size:14px;z-index:5;max-width:calc(100% - 32px)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <p class="eyebrow">Press reports · Republic of Cyprus · 1 Jan 2016 to today</p>
+    <h1>Cyprus Road Crash Register</h1>
+    <p class="lede">One row per news article about a road traffic collision, fatal or not, in the areas under the effective control of the Republic of Cyprus, including the British Sovereign Base Areas. Greek-language reports are summarised in English.</p>
+    <div class="status" id="status" role="status" aria-live="polite"><span class="pulse"></span><span>Connecting to the register…</span></div>
+  </header>
+
+  <section class="tiles" aria-label="Register totals">
+    <div class="tile"><span class="lab">Articles logged</span><span class="val" id="t-articles">0</span></div>
+    <div class="tile"><span class="lab">Distinct crashes</span><span class="val" id="t-events">0</span></div>
+    <div class="tile"><span class="lab">Fatal crashes</span><span class="val"><span class="key sw f"></span><span id="t-fatal">0</span></span></div>
+    <div class="tile"><span class="lab">Non-fatal crashes</span><span class="val"><span class="key sw n"></span><span id="t-nonfatal">0</span></span></div>
+    <div class="tile"><span class="lab">Outlets cited</span><span class="val" id="t-outlets">0</span></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-chart">
+    <div class="panel-head">
+      <h2 id="h-chart">Distinct crashes per year</h2>
+      <div class="legend" aria-hidden="true"><span><i class="sw f"></i>Fatal</span><span><i class="sw n"></i>Non-fatal</span></div>
+    </div>
+    <p class="hint">Duplicate articles excluded. Select a year to filter the register. The line under each year shows how far the research has got.</p>
+    <div class="chart-box" id="chart-box">
+      <svg id="chart" viewBox="0 0 900 280" role="img" aria-label="Distinct crashes per year, fatal and non-fatal"></svg>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+    <table class="sr" aria-label="Distinct crashes per year"><thead><tr><th>Year</th><th>Fatal</th><th>Non-fatal</th><th>Articles</th></tr></thead><tbody id="sr-body"></tbody></table>
+  </section>
+
+  <section class="panel" aria-labelledby="h-reg">
+    <div class="panel-head">
+      <h2 id="h-reg">Register</h2>
+      <span class="count" id="count">0 rows</span>
+    </div>
+    <div class="filters">
+      <div class="field"><label for="f-q">Search</label><input type="search" id="f-q" placeholder="Place, vehicle, cause…" autocomplete="off"></div>
+      <div class="field"><label for="f-year">Year</label><select id="f-year"><option value="all">All years</option></select></div>
+      <div class="field"><label for="f-sev">Severity</label><select id="f-sev"><option value="all">All</option><option value="Fatal">Fatal</option><option value="Non-Fatal">Non-Fatal</option></select></div>
+      <div class="field"><label for="f-dist">District</label><select id="f-dist"><option value="all">All districts</option><option>Nicosia</option><option>Limassol</option><option>Larnaca</option><option>Paphos</option><option>Famagusta</option><option>Unknown</option></select></div>
+      <div class="field"><label for="f-lang">Article language</label><select id="f-lang"><option value="all">Any</option><option value="EN">English</option><option value="EL">Greek</option></select></div>
+      <div class="field"><label for="f-order">Order</label><select id="f-order"><option value="asc">Oldest first</option><option value="desc">Newest first</option></select></div>
+      <label class="check" for="f-dup"><input type="checkbox" id="f-dup">Hide duplicates</label>
+      <button class="btn" id="b-reset" type="button">Reset</button>
+      <span class="spacer"></span>
+      <div class="exports">
+        <button class="btn primary" id="b-xlsx" type="button">Download Excel</button>
+        <div class="field"><label for="f-delim">CSV separator</label><select id="f-delim"><option value=",">Comma</option><option value=";">Semicolon (EU Excel)</option></select></div>
+        <button class="btn" id="b-csv" type="button">Download CSV</button>
+        <button class="btn" id="b-copy" type="button">Copy for Excel</button>
+      </div>
+    </div>
+    <div class="copybox" id="copybox" hidden>
+      <label for="copy-text" class="hint">Copying was blocked here. The rows are selected below: press Ctrl+C (or Cmd+C), then paste into cell A1.</label>
+      <textarea id="copy-text" readonly></textarea>
+    </div>
+    <div class="table-box">
+      <table>
+        <thead><tr><th>Year</th><th>Day</th><th>Month</th><th>Involved Users</th><th>Accident Outcome</th><th>Road Type</th><th>City / Location</th><th>Crash Causes</th><th>Severity</th><th>Article Link</th><th>Duplicate Flag</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span class="count" id="page-info"></span>
+      <div style="display:flex;gap:8px"><button class="btn" id="b-prev" type="button">Previous</button><button class="btn" id="b-next" type="button">Next</button></div>
+    </div>
+  </section>
+
+  <section class="panel notes" aria-label="Method and sources">
+    <div>
+      <h3>How the rows are built</h3>
+      <ul>
+        <li>Each row is one article. When several outlets report the same crash, the earliest listed article stands as the record and every later one carries * in Duplicate Flag. Tick “Hide duplicates” to count crashes rather than articles.</li>
+        <li>Day, Month and Year are the date of the crash when the article gives or implies it (“on Saturday night”), otherwise the publication date.</li>
+        <li>Severity is Fatal when a person died at the scene or later of crash injuries, and every article about that crash carries the same severity. When a post-mortem found the only death was from a medical cause, such as a heart attack at the wheel, the crash is Non-Fatal and the outcome says so.</li>
+        <li>A block of 41 Cyprus Times posts carries a broken publication date (all stamped 2 June 2016), so those articles are left out.</li>
+        <li>Only press reports are used. Police and government statistics portals are left out, and so are crashes in the north of the island outside the Republic’s effective control.</li>
+        <li>Facebook pages of Cyprus outlets cannot be read reliably without signing in, so the register cites the outlets’ own articles, which their Facebook posts link to.</li>
+        <li>Exports follow the filters and order you have set. Excel files keep the links clickable.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Outlets searched</h3>
+      <ul class="src" id="sources"><li><span class="meta">The list appears with the first batch.</span></li></ul>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var YEARS=[];for(var yy=2016;yy<=2026;yy++)YEARS.push(yy);
+var COLS=["Year","Day","Month","Involved Users","Accident Outcome","Road Type","City / Location","Crash Causes","Severity","Article Link","Duplicate Flag"];
+var PAGE_SIZE=100;
+var ALL=[],META=null,LOADED=false,DL=null,NATIVE_DL=false,CONN="connecting";
+var S={q:"",year:"all",sev:"all",dist:"all",lang:"all",hideDup:false,order:"asc",page:1,delim:","};
+function $(id){return document.getElementById(id);}
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function safeUrl(u){u=String(u||"");return /^https?:\/\//i.test(u)?u:"";}
+function domain(u){try{return new URL(u).hostname.replace(/^www\./,"");}catch(e){return "";}}
+function mIdx(m){var i=MONTHS.indexOf(m);return i<0?12:i;}
+function fmtInt(n){return Number(n||0).toLocaleString("en-GB");}
+function norm(list){
+  return list.map(function(r,i){
+    var o={};for(var k in r)o[k]=r[k];
+    o._i=i;o._k=(+o.y||0)*10000+(mIdx(o.m)+1)*100+(+o.d||0);
+    o._dom=domain(o.url);o._dup=String(o.dup||"").trim()==="*";
+    return o;
+  }).sort(function(a,b){
+    return a._k-b._k||String(a.ev||"").localeCompare(String(b.ev||""))||(a._dup-b._dup)||(a._i-b._i);
+  });
+}
+function filtered(){
+  var q=S.q.trim().toLowerCase();
+  var out=ALL.filter(function(r){
+    if(S.year!=="all"&&String(r.y)!==S.year)return false;
+    if(S.sev!=="all"&&r.s!==S.sev)return false;
+    if(S.dist!=="all"&&(r.dist||"Unknown")!==S.dist)return false;
+    if(S.lang!=="all"&&(r.lang||"")!==S.lang)return false;
+    if(S.hideDup&&r._dup)return false;
+    if(q){var hay=[r.y,r.d,r.m,r.u,r.o,r.rt,r.loc,r.c,r.s,r.url,r.dist].join(" ").toLowerCase();if(hay.indexOf(q)<0)return false;}
+    return true;
+  });
+  if(S.order==="desc")out=out.slice().reverse();
+  return out;
+}
+function perYear(){
+  return YEARS.map(function(y){
+    var f=0,n=0,a=0;
+    for(var i=0;i<ALL.length;i++){var r=ALL[i];if(+r.y!==y)continue;a++;if(r._dup)continue;if(r.s==="Fatal")f++;else n++;}
+    return {y:y,f:f,n:n,a:a};
+  });
+}
+function renderTiles(){
+  var ev=ALL.filter(function(r){return !r._dup;});
+  $("t-articles").textContent=fmtInt(ALL.length);
+  $("t-events").textContent=fmtInt(ev.length);
+  $("t-fatal").textContent=fmtInt(ev.filter(function(r){return r.s==="Fatal";}).length);
+  $("t-nonfatal").textContent=fmtInt(ev.filter(function(r){return r.s!=="Fatal";}).length);
+  var doms={};ALL.forEach(function(r){if(r._dom)doms[r._dom]=1;});
+  $("t-outlets").textContent=fmtInt(Object.keys(doms).length);
+}
+function niceStep(max){var raw=max/4;var p=Math.pow(10,Math.floor(Math.log10(raw)));var m=raw/p;return (m<=1?1:m<=2?2:m<=5?5:10)*p;}
+function topRounded(x,y,w,h,r){r=Math.min(r,h,w/2);return "M"+x+","+(y+h)+"V"+(y+r)+"Q"+x+","+y+" "+(x+r)+","+y+"H"+(x+w-r)+"Q"+(x+w)+","+y+" "+(x+w)+","+(y+r)+"V"+(y+h)+"Z";}
+function yearState(y){var ys=META&&META.years?META.years[String(y)]:null;return ys||"queued";}
+function renderChart(){
+  var svg=$("chart"),W=900,H=280,ml=44,mr=10,mt=22,mb=58;
+  var data=perYear();
+  var max=Math.max(4,Math.max.apply(null,data.map(function(d){return d.f+d.n;})));
+  var step=niceStep(max),top=Math.ceil(max/step)*step;
+  var ph=H-mt-mb,pw=W-ml-mr,band=pw/data.length,bw=Math.min(24,band*0.5);
+  function Y(v){return mt+ph-(v/top)*ph;}
+  var s="";
+  for(var t=0;t<=top+1e-9;t+=step){var yv=Y(t);s+='<line class="'+(t===0?"base":"grid")+'" x1="'+ml+'" x2="'+(W-mr)+'" y1="'+yv+'" y2="'+yv+'"/>';s+='<text class="tick" x="'+(ml-8)+'" y="'+(yv+4)+'" text-anchor="end">'+fmtInt(t)+'</text>';}
+  data.forEach(function(d,i){
+    var cx=ml+band*i+band/2,x=cx-bw/2,sel=S.year===String(d.y);
+    if(sel)s+='<rect class="selband" x="'+(ml+band*i+2)+'" y="'+mt+'" width="'+(band-4)+'" height="'+ph+'" rx="4"/>';
+    var base=Y(0),hf=(d.f/top)*ph,hn=(d.n/top)*ph,gap=(d.f>0&&d.n>0)?2:0;
+    if(d.f>0){s+=(d.n>0)?'<rect class="seg-f" x="'+x+'" y="'+(base-hf)+'" width="'+bw+'" height="'+hf+'"/>':'<path class="seg-f" d="'+topRounded(x,base-hf,bw,hf,4)+'"/>';}
+    if(d.n>0){var yTop=base-hf-gap-hn;s+='<path class="seg-n" d="'+topRounded(x,yTop,bw,Math.max(hn,0.5),4)+'"/>';}
+    var tot=d.f+d.n;if(tot>0)s+='<text class="cap" x="'+cx+'" y="'+(Y(tot)-gap-6)+'" text-anchor="middle">'+fmtInt(tot)+'</text>';
+    s+='<text class="yr'+(sel?" sel":"")+'" x="'+cx+'" y="'+(H-mb+20)+'" text-anchor="middle">'+d.y+'</text>';
+    var st=yearState(d.y),glyph=st==="done"?"✓ checked":st==="running"?"◐ in progress":"○ queued";
+    s+='<text class="st" x="'+cx+'" y="'+(H-mb+38)+'" text-anchor="middle">'+glyph+'</text>';
+    s+='<rect class="hit" tabindex="0" role="button" aria-label="'+d.y+': '+d.f+' fatal, '+d.n+' non-fatal crashes, '+d.a+' articles. Filter the register to this year." data-i="'+i+'" x="'+(ml+band*i+1)+'" y="'+mt+'" width="'+(band-2)+'" height="'+(ph+mb-6)+'" rx="4"/>';
+  });
+  svg.innerHTML=s;
+  $("sr-body").innerHTML=data.map(function(d){return "<tr><td>"+d.y+"</td><td>"+d.f+"</td><td>"+d.n+"</td><td>"+d.a+"</td></tr>";}).join("");
+  var tip=$("tip"),box=$("chart-box");
+  Array.prototype.forEach.call(svg.querySelectorAll(".hit"),function(el){
+    var d=data[+el.getAttribute("data-i")];
+    function show(){var r=el.getBoundingClientRect(),b=box.getBoundingClientRect();tip.innerHTML="<b>"+d.y+"</b><span>"+fmtInt(d.f)+" fatal · "+fmtInt(d.n)+" non-fatal</span><span>"+fmtInt(d.a)+" articles · "+(yearState(d.y)==="done"?"checked":yearState(d.y)==="running"?"in progress":"queued")+"</span>";tip.style.left=Math.min(Math.max(r.left-b.left+r.width/2,90),b.width-90)+"px";tip.style.top=(r.top-b.top+8)+"px";tip.hidden=false;}
+    function hide(){tip.hidden=true;}
+    function pick(){S.year=(S.year===String(d.y))?"all":String(d.y);S.page=1;$("f-year").value=S.year;renderAll();}
+    el.addEventListener("pointerenter",show);el.addEventListener("pointerleave",hide);el.addEventListener("focus",show);el.addEventListener("blur",hide);
+    el.addEventListener("click",pick);el.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();pick();}});
+  });
+}
+function cell(cls,v){return '<td class="'+cls+'">'+esc(v)+'</td>';}
+function renderTable(){
+  var list=filtered(),tb=$("rows");
+  var pages=Math.max(1,Math.ceil(list.length/PAGE_SIZE));if(S.page>pages)S.page=pages;
+  var start=(S.page-1)*PAGE_SIZE,slice=list.slice(start,start+PAGE_SIZE);
+  $("count").textContent=fmtInt(list.length)+(list.length===1?" row":" rows")+(list.length!==ALL.length?" of "+fmtInt(ALL.length):"");
+  if(!ALL.length){
+    tb.innerHTML='<tr class="empty"><td colspan="11"><b>'+(CONN==="error"?"The register could not be loaded.":"Loading the register…")+'</b>'+(CONN==="error"?"Reload the page to try again.":"About 8,000 rows are on their way; this takes a moment on slow connections.")+'</td></tr>';
+  }else if(!list.length){
+    tb.innerHTML='<tr class="empty"><td colspan="11"><b>No rows match these filters.</b>Clear the search or press Reset to see the whole register.</td></tr>';
+  }else{
+    tb.innerHTML=slice.map(function(r){
+      var u=safeUrl(r.url),sevF=r.s==="Fatal";
+      return '<tr class="'+(r._dup?"is-dup":"")+'">'+cell("num",r.y)+cell("num",r.d)+cell("",r.m)+cell("w-u",r.u)+cell("w-o",r.o)+cell("w-rt",r.rt)+
+        '<td class="w-l">'+esc(r.loc)+(r.dist&&r.dist!=="Unknown"&&String(r.loc||"").indexOf(r.dist)<0?'<span class="sub">'+esc(r.dist)+' district</span>':'')+'</td>'+
+        cell("w-c",r.c)+'<td><span class="sev '+(sevF?"f":"n")+'">'+esc(r.s||"")+'</span></td>'+
+        '<td class="link">'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" title="'+esc(u)+'">'+esc(r._dom||"article")+'</a>':'')+'</td>'+
+        '<td class="dup">'+(r._dup?'<span title="Same crash as an earlier entry">*</span>':'')+'</td></tr>';
+    }).join("");
+  }
+  $("page-info").textContent=list.length?("Rows "+fmtInt(start+1)+"–"+fmtInt(Math.min(start+PAGE_SIZE,list.length))+" · page "+S.page+" of "+pages):"";
+  $("b-prev").disabled=S.page<=1;$("b-next").disabled=S.page>=pages;
+}
+function fmtTime(iso){if(!iso)return "";var d=new Date(iso);if(isNaN(d))return "";return d.toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});}
+function renderStatus(){
+  var el=$("status");
+  if(CONN==="error"){el.innerHTML='<span class="pulse"></span><span>The register&#39;s data could not be loaded. Reload the page to try again.</span>';return;}
+  if(!META){el.innerHTML='<span class="pulse live"></span><span>Loading the register…</span>';return;}
+  el.innerHTML='<span class="pulse '+(META.state==="done"?"ok":"live")+'"></span><b>'+esc(META.phase||"Research in progress")+'</b><span>'+esc(META.note||"")+'</span>'+(META.updatedAt?'<time datetime="'+esc(META.updatedAt)+'">Updated '+esc(fmtTime(META.updatedAt))+'</time>':'');
+}
+function renderSources(){
+  var el=$("sources"),src=META&&Array.isArray(META.sources)?META.sources:null;
+  if(!src||!src.length)return;
+  el.innerHTML=src.map(function(s){return '<li><span class="nm">'+esc(s.name)+'</span><span class="meta">'+esc([s.domain,s.lang,s.years].filter(Boolean).join(" · "))+'</span>'+(s.status?'<span class="meta">'+esc(s.status)+'</span>':'')+'</li>';}).join("");
+}
+function renderAll(){renderTiles();renderChart();renderTable();renderStatus();renderSources();}
+
+/* Exports */
+function asRow(r){return [r.y,r.d,r.m,r.u,r.o,r.rt,r.loc,r.c,r.s,r.url,r._dup?"*":""];}
+function toCSV(list,delim){function q(v){return '"'+String(v==null?"":v).replace(/"/g,'""')+'"';}return "﻿"+[COLS].concat(list.map(asRow)).map(function(a){return a.map(q).join(delim);}).join("\r\n")+"\r\n";}
+function toTSV(list){function c(v){return String(v==null?"":v).replace(/[\t\r\n]+/g," ");}return [COLS].concat(list.map(asRow)).map(function(a){return a.map(c).join("\t");}).join("\n");}
+function stamp(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function toast(msg){var t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(function(){t.hidden=true;},3600);}
+function nativeSave(filename,data){
+  var blob=data instanceof Blob?data:new Blob([data],{type:/\.csv$/.test(filename)?"text/csv;charset=utf-8":"application/octet-stream"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1500);toast("Saved "+filename);
+}
+function save(filename,data){
+  if(!DL&&NATIVE_DL){nativeSave(filename,data);return;}
+  if(!DL){toast("Downloads are not available in this view. Use Copy for Excel instead.");return;}
+  DL.save({filename:filename,data:data}).then(function(res){if(res&&res.status==="saved")toast("Saved "+filename);}).catch(function(e){
+    var c=e&&e.code;if(c==="declined")return;
+    toast(c==="rate_limited"?"A save prompt is already open.":c==="extension_not_enabled"?"This file type is not available here. Try CSV.":"The file could not be saved here.");
+  });
+}
+function exportList(){return filtered();}
+function buildXlsx(list){
+  var aoa=[COLS].concat(list.map(asRow));
+  var ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"]=[{wch:6},{wch:5},{wch:10},{wch:34},{wch:46},{wch:20},{wch:26},{wch:32},{wch:10},{wch:60},{wch:10}];
+  for(var i=0;i<list.length;i++){var ref=XLSX.utils.encode_cell({r:i+1,c:9});var u=safeUrl(list[i].url);if(ws[ref]&&u)ws[ref].l={Target:u};}
+  ws["!autofilter"]={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(list.length,1),c:10}})};
+  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Road crashes");
+  return XLSX.write(wb,{bookType:"xlsx",type:"array"});
+}
+function bindUI(){
+  var ys=$("f-year");YEARS.forEach(function(y){var o=document.createElement("option");o.value=String(y);o.textContent=String(y);ys.appendChild(o);});
+  $("f-q").value=S.q;ys.value=S.year;$("f-sev").value=S.sev;$("f-dist").value=S.dist;$("f-lang").value=S.lang;$("f-order").value=S.order;$("f-dup").checked=S.hideDup;$("f-delim").value=S.delim;
+  var qt;$("f-q").addEventListener("input",function(e){clearTimeout(qt);qt=setTimeout(function(){S.q=e.target.value;S.page=1;renderTable();},160);});
+  [["f-year","year"],["f-sev","sev"],["f-dist","dist"],["f-lang","lang"],["f-order","order"],["f-delim","delim"]].forEach(function(p){$(p[0]).addEventListener("change",function(e){S[p[1]]=e.target.value;S.page=1;if(p[1]==="year")renderChart();renderTable();});});
+  $("f-dup").addEventListener("change",function(e){S.hideDup=e.target.checked;S.page=1;renderTable();});
+  $("b-reset").addEventListener("click",function(){S.q="";S.year="all";S.sev="all";S.dist="all";S.lang="all";S.hideDup=false;S.order="asc";S.page=1;$("f-q").value="";ys.value="all";$("f-sev").value="all";$("f-dist").value="all";$("f-lang").value="all";$("f-order").value="asc";$("f-dup").checked=false;renderAll();});
+  $("b-prev").addEventListener("click",function(){if(S.page>1){S.page--;renderTable();}});
+  $("b-next").addEventListener("click",function(){S.page++;renderTable();});
+  $("b-csv").addEventListener("click",function(){var l=exportList();if(!l.length){toast("There are no rows to export yet.");return;}save("cyprus-road-crashes-"+stamp()+".csv",toCSV(l,S.delim));});
+  $("b-xlsx").addEventListener("click",function(){var l=exportList();if(!l.length){toast("There are no rows to export yet.");return;}if(typeof XLSX==="undefined"){toast("The Excel builder did not load. Use Download CSV.");return;}try{save("cyprus-road-crashes-"+stamp()+".xlsx",new Blob([buildXlsx(l)],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));}catch(e){toast("The Excel file could not be built. Use Download CSV.");}});
+  $("b-copy").addEventListener("click",function(){
+    var l=exportList();if(!l.length){toast("There are no rows to copy yet.");return;}
+    var text=toTSV(l);
+    var fallback=function(){var b=$("copybox"),ta=$("copy-text");ta.value=text;b.hidden=false;ta.focus();ta.select();};
+    try{navigator.clipboard.writeText(text).then(function(){$("copybox").hidden=true;toast("Copied "+fmtInt(l.length)+" rows. Paste into cell A1 in Excel.");},fallback);}catch(e){fallback();}
+  });
+}
+function updateExportUI(){var off=!DL&&!NATIVE_DL;$("b-xlsx").disabled=off;$("b-csv").disabled=off;$("b-xlsx").title=off?"Downloads are not available in this view":"";$("b-csv").title=$("b-xlsx").title;}
+function connectDownloads(){
+  var c=window.claude;
+  if(!c||typeof c.use!=="function"){NATIVE_DL=true;updateExportUI();return;}
+  c.use("downloads").then(function(d){DL=d||null;updateExportUI();},function(){DL=null;updateExportUI();});
+}
+/* Rows ship with the page as a static data file (or inline in the offline copy), so no sign-in is needed. */
+function ingest(d){
+  META=d.meta||null;
+  ALL=norm((d.rows||[]).map(function(a){return {y:a[0],d:a[1],m:MONTHS[a[2]],u:a[3],o:a[4],rt:a[5],loc:a[6],c:a[7],s:a[8]?"Fatal":"Non-Fatal",url:a[9],dup:a[10]?"*":"",dist:a[11],lang:a[12],ev:a[13]};}));
+  LOADED=true;CONN="live";renderAll();
+}
+function loadData(){
+  if(window.RCR_DATA){ingest(window.RCR_DATA);return;}
+  fetch("register-data.json").then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(ingest).catch(function(){CONN="error";renderAll();});
+}
+function start(saved){
+  if(saved&&saved.S&&typeof saved.S==="object"){for(var k in S){if(k in saved.S)S[k]=saved.S[k];}}
+  bindUI();updateExportUI();renderAll();connectDownloads();loadData();
+}
+(function boot(){
+  var hot=window.claude&&window.claude.hot;
+  try{if(hot&&typeof hot.snapshot==="function")hot.snapshot(function(){return {S:S};});}catch(e){}
+  if(hot&&typeof hot.ready==="function")hot.ready(start);else start(hot&&hot.data||{});
+})();
+</script>
+
+</body>
+</html>
